@@ -12,7 +12,18 @@ def create_board():
 # to see the board the way we would expect to see it as humans we need to print in reverse order
 # np.flip(matrix,axis) if axis==0 flip rows. if axis == 1 flip coloumns
 def print_board(board):
-    print(np.flip(board, 0))
+    board = np.flip(board, 0)
+
+    # Define ANSI color codes for background colors
+    colors = {0: "\033[47m  \033[0m", 1: "\033[44m  \033[0m", 2: "\033[41m  \033[0m"}  # White, Blue, Red
+
+    # Print the array with colors, spaces between squares, and reduced spacing between rows
+    for row in board:
+        for element in row:
+            print(f"{colors[element]} ", end="")  # Add an extra space for spacing
+        print()  # Move to the next row
+        print()  # Add space between rows
+
 
 # check to see if top space in coloumn is empty
 def is_valid_move(board, col):
