@@ -1,6 +1,7 @@
 from tkinter import *
 import argparse
 import numpy as np
+import randomMove
 
 class GUI:
     def __init__(self):
@@ -39,6 +40,11 @@ class GUI:
 
         self.currentPlayer = 1
 
+        self.gameStatusLabelText = StringVar()
+        self.gameStatusLabelText.set("")
+        gameStatusLabel = Label(self.root, textvariable=self.gameStatusLabelText, foreground="red")
+
+
         #Movement Buttons
         button0 = Button(self.root, text="Move Here", command = lambda: self.MoveButtonPress(0))
         button1 = Button(self.root, text="Move Here", command = lambda: self.MoveButtonPress(1))
@@ -51,15 +57,17 @@ class GUI:
         clearButton = Button(self.root, text="Clear Board", command = lambda: self.ClearButtonPress())
         
         # Movement Button Placement
-        button0.grid(row = 0, column = 0)
-        button1.grid(row = 0, column = 1)
-        button2.grid(row = 0, column = 2)
-        button3.grid(row = 0, column = 3)
-        button4.grid(row = 0, column = 4)
-        button5.grid(row = 0, column = 5)
-        button6.grid(row = 0, column = 6)
+        button0.grid(row = 1, column = 0)
+        button1.grid(row = 1, column = 1)
+        button2.grid(row = 1, column = 2)
+        button3.grid(row = 1, column = 3)
+        button4.grid(row = 1, column = 4)
+        button5.grid(row = 1, column = 5)
+        button6.grid(row = 1, column = 6)
 
-        clearButton.grid(row = 0, column = 7)
+        gameStatusLabel.grid(row = 0, column = 0, columnspan = 8)
+
+        clearButton.grid(row = 1, column = 7)
 
         self.displayBoard()
 
@@ -69,7 +77,7 @@ class GUI:
         None
 
         canvas = Canvas(self.root, width=(100*self.x_dimension), height = (100*self.y_dimension))
-        canvas.grid(row = 1, column = 0, columnspan = self.x_dimension, rowspan=self.y_dimension, sticky=NW)
+        canvas.grid(row = 2, column = 0, columnspan = self.x_dimension, rowspan=self.y_dimension, sticky=NW)
 
         for columnNum, column in enumerate(self.board):
 
@@ -85,6 +93,11 @@ class GUI:
         canvas.create_rectangle
 
     def MoveButtonPress(self, slot):
+
+        if (self.topRow[slot] < 0):
+            self.gameStatusLabelText.set("Non-Valid Move")
+            print("Non Valid Move")
+            return
         
         self.board[slot][self.topRow[slot]] = self.currentPlayer
 
@@ -98,6 +111,21 @@ class GUI:
         self.displayBoard()
 
         self.checkGameStatus(slot, self.topRow[slot]+1)
+
+        slot = randomMove.randomMove(self.board, self.topRow)
+
+        self.board[slot][self.topRow[slot]] = self.currentPlayer
+
+        self.topRow[slot] -= 1
+
+        if (self.currentPlayer == 1):
+            self.currentPlayer = 2
+        else:
+            self.currentPlayer = 1
+
+        self.displayBoard()
+
+        self.checkGameStatus(slot, self.topRow[slot]+1)       
 
     def checkGameStatus(self, movex, movey):
         player = self.board[movex][movey]
@@ -119,6 +147,7 @@ class GUI:
                     break
         
         if (inRow >= self.connectNum):
+            self.gameStatusLabelText.set(f"Player {player} Wins!")
             print(f"Player {player} Wins!")
             return 1 
             
@@ -132,6 +161,7 @@ class GUI:
                     break
 
         if (inRow >= self.connectNum):
+            self.gameStatusLabelText.set(f"Player {player} Wins!")
             print(f"Player {player} Wins!")
             return 1 
 
@@ -152,6 +182,7 @@ class GUI:
                     break
 
         if (inRow >= self.connectNum):
+            self.gameStatusLabelText.set(f"Player {player} Wins!")
             print(f"Player {player} Wins!")
             return 1
 
@@ -172,6 +203,7 @@ class GUI:
                     break
 
         if (inRow >= self.connectNum):
+            self.gameStatusLabelText.set(f"Player {player} Wins!")
             print(f"Player {player} Wins!")
             return 1                         
         
