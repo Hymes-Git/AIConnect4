@@ -237,7 +237,7 @@ class GUI:
             self.board.append(junk)         
 
     def gameFinished(self):
-        print(f"Game Took: {self.numMoves} to Complete")
+        print(f"Game Took: {self.numMoves} Moves to Complete")
         print(f"Player 1 AI Took: {self.timing[1]} Seconds to Compute Moves")
         print(f"Player 2 AI Took: {self.timing[2]} Seconds to Compute Moves")
 
