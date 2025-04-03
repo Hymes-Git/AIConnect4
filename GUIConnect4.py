@@ -2,6 +2,7 @@ from tkinter import *
 import argparse
 import numpy as np
 import randomMove
+import time
 
 class GUI:
     def __init__(self):
@@ -10,7 +11,7 @@ class GUI:
         self.root=Tk()
         self.connectNum = 4
 
-        self.gameMode = 0 # gameMode determines human v. human, human v. AI or AI v. AI
+        self.gameMode = 1 # gameMode determines human v. human, human v. AI or AI v. AI
 
         self.root.title("Connect 4")
 
@@ -26,19 +27,7 @@ class GUI:
         self.root.geometry(f'{windowWidth}x{windowHeight}')
         self.root.resizable(True, True)
 
-        self.board = []
-        self.topRow = []
-
-        for i in range(self.x_dimension):
-            junk = []
-            self.topRow.append(self.y_dimension-1)
-            for j in range (self.y_dimension):
-                junk.append(0)
-            self.board.append(junk)
-
-        print(self.board)
-
-        self.currentPlayer = 1
+        self.resetGame()
 
         self.gameStatusLabelText = StringVar()
         self.gameStatusLabelText.set("")
@@ -55,6 +44,7 @@ class GUI:
         button6 = Button(self.root, text="Move Here", command = lambda: self.MoveButtonPress(6))
 
         clearButton = Button(self.root, text="Clear Board", command = lambda: self.ClearButtonPress())
+        AIMoveButton = Button(self.root, text="AI Move", command = lambda: self.getAIMove())
         
         # Movement Button Placement
         button0.grid(row = 1, column = 0)
@@ -68,6 +58,7 @@ class GUI:
         gameStatusLabel.grid(row = 0, column = 0, columnspan = 8)
 
         clearButton.grid(row = 1, column = 7)
+        AIMoveButton.grid(row = 1, column = 8)
 
         self.displayBoard()
 
@@ -93,15 +84,19 @@ class GUI:
         canvas.create_rectangle
 
     def MoveButtonPress(self, slot):
+        
+        self.numMoves += 1
 
-        if (self.topRow[slot] < 0):
+        if (slot not in self.availableMoves):
             self.gameStatusLabelText.set("Non-Valid Move")
-            print("Non Valid Move")
+            print(f"Non Valid Move, Valid Moves: {self.availableMoves}")
             return
         
         self.board[slot][self.topRow[slot]] = self.currentPlayer
-
         self.topRow[slot] -= 1
+
+        if self.topRow[slot] < 0:
+            self.availableMoves.remove(slot)
 
         if (self.currentPlayer == 1):
             self.currentPlayer = 2
@@ -112,11 +107,26 @@ class GUI:
 
         self.checkGameStatus(slot, self.topRow[slot]+1)
 
-        slot = randomMove.randomMove(self.board, self.topRow)
+        if (self.gameMode == 1):
 
-        self.board[slot][self.topRow[slot]] = self.currentPlayer
+            self.getAIMove() 
+
+    def getAIMove(self):
+
+        self.numMoves += 1
+
+        # Run AI Move Get, keep track of how much time AI took to process
+        start_time = time.time()
+        slot = randomMove.randomMove(self.board, self.topRow, self.availableMoves, self.currentPlayer)
+        print(f"AI Operation Took: {time.time() - start_time} seconds")
+        self.timing[self.currentPlayer] += time.time() - start_time
+
+        self.board[slot][self.topRow[slot]] = self.currentPlayer 
 
         self.topRow[slot] -= 1
+
+        if self.topRow[slot] < 0:
+            self.availableMoves.remove(slot)            
 
         if (self.currentPlayer == 1):
             self.currentPlayer = 2
@@ -125,7 +135,7 @@ class GUI:
 
         self.displayBoard()
 
-        self.checkGameStatus(slot, self.topRow[slot]+1)       
+        self.checkGameStatus(slot, self.topRow[slot]+1)                  
 
     def checkGameStatus(self, movex, movey):
         player = self.board[movex][movey]
@@ -149,7 +159,7 @@ class GUI:
         if (inRow >= self.connectNum):
             self.gameStatusLabelText.set(f"Player {player} Wins!")
             print(f"Player {player} Wins!")
-            return 1 
+            return player 
             
         #Check Vertical
         inRow = 1
@@ -163,7 +173,7 @@ class GUI:
         if (inRow >= self.connectNum):
             self.gameStatusLabelText.set(f"Player {player} Wins!")
             print(f"Player {player} Wins!")
-            return 1 
+            return player 
 
         #Check Diagonal Left Up Right Down
         inRow = 1
@@ -184,7 +194,7 @@ class GUI:
         if (inRow >= self.connectNum):
             self.gameStatusLabelText.set(f"Player {player} Wins!")
             print(f"Player {player} Wins!")
-            return 1
+            return player
 
         #Check Diagonal Right Up Left Down
         inRow = 1
@@ -205,24 +215,39 @@ class GUI:
         if (inRow >= self.connectNum):
             self.gameStatusLabelText.set(f"Player {player} Wins!")
             print(f"Player {player} Wins!")
-            return 1                         
-        
+            return player
 
-    def ClearButtonPress(self):
-    
-        print("clearing")
+        return 0                         
 
+    def resetGame(self):
         self.board = []
         self.topRow = []
+        self.availableMoves = []
+        self.numMoves = 0
+        self.timing = [0, 0, 0]
 
         self.currentPlayer = 1
 
         for i in range(self.x_dimension):
             junk = []
+            self.availableMoves.append(i)
             self.topRow.append(self.y_dimension-1)
             for j in range (self.y_dimension):
                 junk.append(0)
-            self.board.append(junk)
+            self.board.append(junk)         
+
+    def gameFinished(self):
+        print(f"Game Took: {self.numMoves} to Complete")
+        print(f"Player 1 AI Took: {self.timing[1]} Seconds to Compute Moves")
+        print(f"Player 2 AI Took: {self.timing[2]} Seconds to Compute Moves")
+
+    def ClearButtonPress(self):
+    
+        print("clearing")
+
+        self.gameFinished()
+
+        self.resetGame()
 
         self.displayBoard()
 
