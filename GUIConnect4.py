@@ -2,6 +2,7 @@ from tkinter import *
 import argparse
 import numpy as np
 import randomMove
+import Minimax
 import time
 
 class GUI:
@@ -117,7 +118,8 @@ class GUI:
 
         # Run AI Move Get, keep track of how much time AI took to process
         start_time = time.time()
-        slot = randomMove.randomMove(self.board, self.topRow, self.availableMoves, self.currentPlayer)
+        # slot = randomMove.randomMove(self.board, self.topRow, self.availableMoves, self.currentPlayer)
+        slot = Minimax.minimax_move(self.board, self.topRow, self.availableMoves, self.currentPlayer)
         print(f"AI Operation Took: {time.time() - start_time} seconds")
         self.timing[self.currentPlayer] += time.time() - start_time
 
