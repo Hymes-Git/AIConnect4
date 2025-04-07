@@ -28,12 +28,13 @@ class GUI:
         self.root.geometry(f'{windowWidth}x{windowHeight}')
         self.root.resizable(True, True)
 
-        self.resetGame()
+
 
         self.gameStatusLabelText = StringVar()
         self.gameStatusLabelText.set("")
         gameStatusLabel = Label(self.root, textvariable=self.gameStatusLabelText, foreground="red")
 
+        self.resetGame()
 
         #Movement Buttons
         button0 = Button(self.root, text="Move Here", command = lambda: self.MoveButtonPress(0))
@@ -119,7 +120,7 @@ class GUI:
         # Run AI Move Get, keep track of how much time AI took to process
         start_time = time.time()
         # slot = randomMove.randomMove(self.board, self.topRow, self.availableMoves, self.currentPlayer)
-        slot = Minimax.minimax_move(self.board, self.topRow, self.availableMoves, self.currentPlayer)
+        slot = Minimax.minimax_move(self.board, self.topRow, self.availableMoves, self.currentPlayer, 6)
         print(f"AI Operation Took: {time.time() - start_time} seconds")
         self.timing[self.currentPlayer] += time.time() - start_time
 
@@ -230,13 +231,16 @@ class GUI:
 
         self.currentPlayer = 1
 
+        self.gameStatusLabelText.set("")
+
         for i in range(self.x_dimension):
             junk = []
             self.availableMoves.append(i)
             self.topRow.append(self.y_dimension-1)
             for j in range (self.y_dimension):
                 junk.append(0)
-            self.board.append(junk)         
+            self.board.append(junk) 
+                    
 
     def gameFinished(self):
         print(f"Game Took: {self.numMoves} Moves to Complete")
