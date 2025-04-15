@@ -5,6 +5,11 @@ import randomMove
 import Minimax
 import time
 
+class Move:
+    def __init__(self, player, column):
+        self.player = player
+        self.column = column
+
 class GUI:
     def __init__(self):
         self.x_dimension = 7
@@ -28,13 +33,16 @@ class GUI:
         self.root.geometry(f'{windowWidth}x{windowHeight}')
         self.root.resizable(True, True)
 
-
-
         self.gameStatusLabelText = StringVar()
         self.gameStatusLabelText.set("")
         gameStatusLabel = Label(self.root, textvariable=self.gameStatusLabelText, foreground="red")
 
+
+
+
         self.resetGame()
+
+        self.displayMoveList()
 
         #Movement Buttons
         button0 = Button(self.root, text="Move Here", command = lambda: self.MoveButtonPress(0))
@@ -47,6 +55,7 @@ class GUI:
 
         clearButton = Button(self.root, text="Clear Board", command = lambda: self.ClearButtonPress())
         AIMoveButton = Button(self.root, text="AI Move", command = lambda: self.getAIMove())
+        runGameButton = Button(self.root, text="Run AI Game", command = lambda: self.runAIGame())
         
         # Movement Button Placement
         button0.grid(row = 1, column = 0)
@@ -59,12 +68,19 @@ class GUI:
 
         gameStatusLabel.grid(row = 0, column = 0, columnspan = 8)
 
-        clearButton.grid(row = 1, column = 7)
-        AIMoveButton.grid(row = 1, column = 8)
+        clearButton.grid(row = 1, column = 7, columnspan = 1, sticky = NW)
+        AIMoveButton.grid(row = 1, column = 8, columnspan=1, sticky = NW)
+        runGameButton.grid(row = 1, column = 9, columnspan = 1, sticky = NW)
 
         self.displayBoard()
 
         self.root.mainloop()
+
+    def displayMoveList(self):
+        self.moveListText = Text(self.root, height=35, width = 30)
+        for item in self.moveList:
+            self.moveListText.insert(END, f"Player: {item.player} placed in slot: {item.column}\n")
+        self.moveListText.grid(row = 2, column = 7, rowspan = 7, columnspan = 3, sticky = NW)
 
     def displayBoard(self):
         None
@@ -100,6 +116,8 @@ class GUI:
         if self.topRow[slot] < 0:
             self.availableMoves.remove(slot)
 
+        self.moveList.append(Move(self.currentPlayer, slot))
+
         if (self.currentPlayer == 1):
             self.currentPlayer = 2
         else:
@@ -107,9 +125,11 @@ class GUI:
 
         self.displayBoard()
 
-        self.checkGameStatus(slot, self.topRow[slot]+1)
+        result = self.checkGameStatus(slot, self.topRow[slot]+1)
 
-        if (self.gameMode == 1):
+        self.displayMoveList()
+
+        if (self.gameMode == 1 and result == 0):
 
             self.getAIMove() 
 
@@ -129,7 +149,9 @@ class GUI:
         self.topRow[slot] -= 1
 
         if self.topRow[slot] < 0:
-            self.availableMoves.remove(slot)            
+            self.availableMoves.remove(slot)    
+
+        self.moveList.append(Move(self.currentPlayer, slot))        
 
         if (self.currentPlayer == 1):
             self.currentPlayer = 2
@@ -138,7 +160,11 @@ class GUI:
 
         self.displayBoard()
 
-        self.checkGameStatus(slot, self.topRow[slot]+1)                  
+        result = self.checkGameStatus(slot, self.topRow[slot]+1)  
+
+        self.displayMoveList() 
+
+        return result               
 
     def checkGameStatus(self, movex, movey):
         player = self.board[movex][movey]
@@ -228,6 +254,7 @@ class GUI:
         self.availableMoves = []
         self.numMoves = 0
         self.timing = [0, 0, 0]
+        self.moveList = []
 
         self.currentPlayer = 1
 
@@ -240,7 +267,18 @@ class GUI:
             for j in range (self.y_dimension):
                 junk.append(0)
             self.board.append(junk) 
-                    
+
+    def runAIGame(self):
+        self.resetGame()
+        while(True):
+            result = self.getAIMove()
+            self.root.update()
+            if result != 0:
+                self.gameFinished()
+                return result
+            
+        
+            
 
     def gameFinished(self):
         print(f"Game Took: {self.numMoves} Moves to Complete")
@@ -256,6 +294,8 @@ class GUI:
         self.resetGame()
 
         self.displayBoard()
+
+        self.displayMoveList()
 
 if __name__ == "__main__":
     GUI()
