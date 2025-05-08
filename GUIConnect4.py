@@ -13,8 +13,37 @@ class Move:
         self.player = player
         self.column = column
 
-def mcts_connect4_move(board, top_row, available_moves, current_player, iterations=2000):
-    return mcts_move(board, top_row, available_moves, current_player, iterations)
+def mcts_connect4_move(board, top_row, available_moves, current_player, iterations=3000):
+    """
+    Wrapper function to be called from the GUI
+    
+    Parameters:
+    - board: 2D list representing the game board
+    - top_row: List indicating the next available row for each column
+    - available_moves: List of columns that are not full
+    - current_player: 1 or 2 (player number)
+    - iterations: Number of MCTS simulations to run
+    
+    Returns:
+    - column: The column where the AI will place its piece
+    """
+    # Make deep copies of the board and top_row to avoid modifying the originals
+    board_copy = [col[:] for col in board]
+    top_row_copy = top_row[:]
+    available_moves_copy = available_moves.copy()
+    
+    # Call the MCTS algorithm
+    column = mcts_move(board_copy, top_row_copy, available_moves_copy, current_player, iterations)
+    
+    # Make sure the column is valid
+    if column not in available_moves:
+        # Fallback to first available move if MCTS returns invalid move
+        if available_moves:
+            column = available_moves[0]
+        else:
+            column = -1
+    
+    return column
 
 class GUI:
     def __init__(self):
@@ -167,7 +196,14 @@ class GUI:
         # mcts = MCTS.Node(self.board, self.topRow, self.availableMoves, self.currentPlayer, 5)
         # slot = mcts.mcts_move()
 
-        slot = mcts_connect4_move(self.board, self.topRow, self.availableMoves, self.currentPlayer, 5000)
+        #slot = mcts_connect4_move(self.board, self.topRow, self.availableMoves, self.currentPlayer, 5000)
+
+        if (self.currentPlayer == 2):
+            slot = mcts_connect4_move(self.board, self.topRow, self.availableMoves, self.currentPlayer, 5000)
+        elif (self.currentPlayer == 1):
+            slot = mcts_connect4_move(self.board, self.topRow, self.availableMoves, self.currentPlayer, 5000)
+           # slot = ABPruning.ab_move(self.board, self.topRow, self.availableMoves, self.currentPlayer, 5)
+
 
         #print(f"AI Operation Took: {time.time() - start_time} seconds")
         self.timing[self.currentPlayer] += (time.time() - start_time)
@@ -318,6 +354,7 @@ class GUI:
 
         player1Wins = 0
         player2Wins = 0
+        ties = 0
         player1Time = 0
         player2Time = 0
 
@@ -331,6 +368,8 @@ class GUI:
                 player1Wins += 1
             elif (result[0] == 2):
                 player2Wins += 1
+            elif (result[0] == 3):
+                ties += 1
             gameStats.append(result)
 
 
@@ -338,6 +377,7 @@ class GUI:
         print(f"Finished running a series of {numGames} games")
         print(f"Player 1 Won {player1Wins} ({player1Wins*100/numGames: .3f}%)  of games, taking {player1Time: .3f} seconds to compute moves")
         print(f"Player 2 Won {player2Wins} ({player2Wins*100/numGames: .3f}%) of games, taking {player2Time: .3f} seconds to compute moves")
+        print(f"{ties} games ended without a victor")
 
         
         
