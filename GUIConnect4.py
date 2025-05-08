@@ -3,13 +3,18 @@ import argparse
 import numpy as np
 import randomMove
 import Minimax
+import MCTS
 import ABPruning
 import time
+from MCTS import mcts_move
 
 class Move:
     def __init__(self, player, column):
         self.player = player
         self.column = column
+
+def mcts_connect4_move(board, top_row, available_moves, current_player, iterations=2000):
+    return mcts_move(board, top_row, available_moves, current_player, iterations)
 
 class GUI:
     def __init__(self):
@@ -158,7 +163,11 @@ class GUI:
          #   slot = ABPruning.ab_move(self.board, self.topRow, self.availableMoves, self.currentPlayer, 5)
             #slot = Minimax.minimax_move(self.board, self.topRow, self.availableMoves, self.currentPlayer, 5)
 
-        slot = ABPruning.ab_move(self.board, self.topRow, self.availableMoves, self.currentPlayer, 5)
+        #slot = ABPruning.ab_move(self.board, self.topRow, self.availableMoves, self.currentPlayer, 5)
+        # mcts = MCTS.Node(self.board, self.topRow, self.availableMoves, self.currentPlayer, 5)
+        # slot = mcts.mcts_move()
+
+        slot = mcts_connect4_move(self.board, self.topRow, self.availableMoves, self.currentPlayer, 5000)
 
         #print(f"AI Operation Took: {time.time() - start_time} seconds")
         self.timing[self.currentPlayer] += (time.time() - start_time)
