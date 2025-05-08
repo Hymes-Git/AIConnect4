@@ -1,168 +1,283 @@
 import math
+import random
+import time
+import numpy as np
 
 class Node:
     def __init__(self, board, parent=None, available_moves=None, current_player=None, top_row=None):
-        self.board = board
+        self.board = [col[:] for col in board]  # Deep copy
         self.parent = parent
         self.children = []
         self.visits = 0
         self.wins = 0
         
-        # Initialize top_row properly - if it's None, create it based on the board
+        # Initialize top_row properly
         if top_row is None:
-            # Calculate the top row based on the board state
-            self.top_row = self.calculate_top_row(board)
+            # Calculate top row based on board
+            self.top_row = []
+            for col in range(len(board)):
+                for row in range(len(board[col])):
+                    if board[col][row] == 0:
+                        self.top_row.append(row)
+                        break
+                else:
+                    self.top_row.append(-1)  # Column is full
         else:
-            # Make a copy of the provided top_row
             self.top_row = top_row[:]
-            
-        # Set current player, defaulting to 1 if not specified
-        self.player = current_player if current_player is not None else 1
         
-        # Always make sure this is a list, never None
-        self.untried_moves = available_moves if available_moves is not None else self.get_available_moves(board)
-    
-    def calculate_top_row(self, board):
-        """Calculate the top row (first empty cell) for each column"""
-        top_row = []
-        for col in range(len(board)):
-            # Find the first empty cell (value 0) from bottom to top
-            row = len(board[col]) - 1
-            while row >= 0 and board[col][row] != 0:
-                row -= 1
-            top_row.append(row)
-        return top_row
-    
-    def get_available_moves(self, board):
-        moves = []
-        for col in range(len(board)):
-            # Check if the column has any empty spaces
-            if any(cell == 0 for cell in board[col]):
-                moves.append(col)
-        return moves
+        # Set current player
+        self.player = current_player
+        
+        # Make sure available_moves is a list
+        if available_moves is None:
+            self.untried_moves = []
+            for col in range(len(board)):
+                if self.top_row[col] >= 0:
+                    self.untried_moves.append(col)
+        else:
+            self.untried_moves = available_moves[:]
     
     def is_fully_expanded(self):
         return len(self.untried_moves) == 0
     
     def select_child(self):
         if not self.children:
-            return self  # Return self if no children available
+            return self
         
+        # UCB1 formula for selection
+        c = 1.41  # Exploration parameter
         best_score = -float("inf")
-        best_child = self.children[0]  # Default to first child to avoid None
+        best_child = self.children[0] if self.children else self
+        
         for child in self.children:
             if child.visits == 0:
                 score = float("inf")
             else:
-                score = child.wins / child.visits + math.sqrt(2 * math.log(self.visits + 1) / child.visits)
+                # UCB1 formula: wins/visits + c * sqrt(ln(parent_visits) / visits)
+                score = child.wins / child.visits + c * math.sqrt(2 * math.log(self.visits) / child.visits)
+            
             if score > best_score:
                 best_score = score
                 best_child = child
-                
+        
         return best_child
     
     def expand(self):
         if not self.untried_moves:
-            return self  # Already fully expanded
+            return self
         
         try:
-            move = self.untried_moves.pop()
+            # Pick a random move from untried moves
+            move = random.choice(self.untried_moves)
+            self.untried_moves.remove(move)
             
-            # Copy board and top_row safely
+            # Make a deep copy of the board and top row
             new_board = [col[:] for col in self.board]
             new_top_row = self.top_row[:]
             
-            # Make the move
-            if move >= len(new_top_row):
-                # Move is out of bounds, return self
-                return self
-                
+            # Execute move
             row = new_top_row[move]
             if row < 0:
-                # Handle column overflow - try another move if possible
-                if self.untried_moves:
-                    return self.expand()
+                # Invalid move (column is full)
                 return self
-                
+            
+            # Place piece
             new_board[move][row] = self.player
             new_top_row[move] -= 1
             
-            # Create new child node with opponent as current player
+            # Calculate new available moves
+            new_available = []
+            for col in range(len(new_board)):
+                if new_top_row[col] >= 0:
+                    new_available.append(col)
+            
+            # Create child with opponent as current player
+            next_player = 3 - self.player  # Switch between player 1 and 2
             child = Node(
-                new_board, 
-                parent=self, 
-                available_moves=self.get_available_moves(new_board),
-                current_player=3 - self.player,  # Switch player (assuming players are 1 and 2)
+                board=new_board,
+                parent=self,
+                available_moves=new_available,
+                current_player=next_player,
                 top_row=new_top_row
             )
             
             self.children.append(child)
             return child
+            
         except Exception as e:
-            # If any error occurs during expansion, return self instead of None
-            print(f"Error during expansion: {e}")
+            print(f"Error in expand: {e}")
             return self
     
     def backpropagate(self, result):
         self.visits += 1
-        self.wins += result
+        
+        # For player 1, we want to maximize their win probability
+        # For player 2, we want to minimize player 1's win probability (or maximize player 2's)
+        if self.player == 1:
+            self.wins += result
+        else:
+            self.wins += (1 - result)
+            
         if self.parent:
-            self.parent.backpropagate(1 - result)  # Invert result for opponent
+            self.parent.backpropagate(result)
 
-# Example MCTS search function
-def mcts_search(root_state, iterations=1000):
-    # Create root node
-    root = Node(board=root_state, current_player=1)
+def check_win(board, move_x, move_y, player, connect_num=4):
+    """Check if the last move resulted in a win"""
+    x_dimension = len(board)
+    y_dimension = len(board[0])
     
-    for _ in range(iterations):
-        # Selection
+    # Check horizontal
+    in_row = 1
+    for num in range(1, connect_num):
+        if move_x + num < x_dimension and board[move_x + num][move_y] == player:
+            in_row += 1
+        else:
+            break
+    
+    for num in range(1, connect_num):
+        if move_x - num >= 0 and board[move_x - num][move_y] == player:
+            in_row += 1
+        else:
+            break
+    
+    if in_row >= connect_num:
+        return True
+    
+    # Check vertical
+    in_row = 1
+    for num in range(1, connect_num):
+        if move_y + num < y_dimension and board[move_x][move_y + num] == player:
+            in_row += 1
+        else:
+            break
+    
+    if in_row >= connect_num:
+        return True
+    
+    # Check diagonal (top-left to bottom-right)
+    in_row = 1
+    for num in range(1, connect_num):
+        if move_x - num >= 0 and move_y - num >= 0 and board[move_x - num][move_y - num] == player:
+            in_row += 1
+        else:
+            break
+    
+    for num in range(1, connect_num):
+        if move_x + num < x_dimension and move_y + num < y_dimension and board[move_x + num][move_y + num] == player:
+            in_row += 1
+        else:
+            break
+    
+    if in_row >= connect_num:
+        return True
+    
+    # Check diagonal (top-right to bottom-left)
+    in_row = 1
+    for num in range(1, connect_num):
+        if move_x + num < x_dimension and move_y - num >= 0 and board[move_x + num][move_y - num] == player:
+            in_row += 1
+        else:
+            break
+    
+    for num in range(1, connect_num):
+        if move_x - num >= 0 and move_y + num < y_dimension and board[move_x - num][move_y + num] == player:
+            in_row += 1
+        else:
+            break
+    
+    if in_row >= connect_num:
+        return True
+    
+    return False
+
+def simulate_game(board, top_row, player, connect_num=4):
+    """Simulate a random game from the current position"""
+    # Make deep copies to avoid modifying originals
+    sim_board = [col[:] for col in board]
+    sim_top_row = top_row[:]
+    current_player = player
+    
+    # Get valid moves
+    valid_moves = []
+    for col in range(len(sim_board)):
+        if sim_top_row[col] >= 0:
+            valid_moves.append(col)
+    
+    last_move_x, last_move_y = -1, -1
+    
+    # Play until game over
+    while valid_moves:
+        # Random move
+        move = random.choice(valid_moves)
+        row = sim_top_row[move]
+        
+        # Place piece
+        sim_board[move][row] = current_player
+        last_move_x, last_move_y = move, row
+        sim_top_row[move] -= 1
+        
+        # Check for win
+        if check_win(sim_board, last_move_x, last_move_y, current_player, connect_num):
+            # Return 1 if player 1 wins, 0 if player 2 wins
+            return 1 if current_player == 1 else 0
+        
+        # Update valid moves
+        if sim_top_row[move] < 0 and move in valid_moves:
+            valid_moves.remove(move)
+        
+        # Switch player
+        current_player = 3 - current_player
+    
+    # Draw
+    return 0.5
+
+def mcts_move(board, top_row, available_moves, current_player, iterations=1000, time_limit=None):
+    """Get best move using MCTS algorithm"""
+    start_time = time.time()
+    
+    # Create root node
+    root = Node(board, current_player=current_player, top_row=top_row, available_moves=available_moves)
+    
+    # Run MCTS iterations
+    iteration = 0
+    while iteration < iterations:
+        if time_limit and (time.time() - start_time > time_limit):
+            break
+        
+        # Selection phase - traverse tree until we reach a leaf node
         node = root
-        # Make sure node is not None before checking if fully expanded
-        while node is not None and node.is_fully_expanded() and node.children:
+        while node.is_fully_expanded() and node.children:
             node = node.select_child()
         
-        # Guard against None
-        if node is None:
-            continue
-            
-        # Expansion
+        # If we can expand this node, do so
         if not node.is_fully_expanded() and node.untried_moves:
             node = node.expand()
+        
+        # Simulation phase - play out a random game from this position
+        if node != root:  # Only simulate if we've moved at least one step
+            result = simulate_game(node.board, node.top_row, node.player)
             
-        # Guard against None again after expansion
-        if node is None:
+            # Backpropagation phase - update statistics up the tree
+            node.backpropagate(result)
+        else:
+            # If we couldn't move from root, try again
             continue
+            
+        iteration += 1
+    
+    # Choose the best child based on most visits
+    if not root.children:
+        # If no children, choose a random move
+        return random.choice(available_moves) if available_moves else -1
         
-        # Simulation - simplified random playout
-        result = simulate_random_game(node.board, node.player)
-        
-        # Backpropagation
-        node.backpropagate(result)
+    # Find child with highest visit count
+    best_child = max(root.children, key=lambda c: c.visits)
     
-    # Return best move
-    best_child = None
-    most_visits = -1
-    for child in root.children:
-        if child.visits > most_visits:
-            most_visits = child.visits
-            best_child = child
+    # Determine which move led to this child
+    for col in range(len(board)):
+        for row in range(len(board[col])):
+            if root.board[col][row] != best_child.board[col][row]:
+                return col
     
-    # Find the move that led to the best child
-    for col in range(len(root_state)):
-        # Check if this move leads to the best child's board
-        if best_child and any(child.board[col] != root_state[col] for child in [best_child]):
-            return col
-    
-    # Fallback: return first available move
-    for col in range(len(root_state)):
-        if root_state[col][0] == 0:
-            return col
-    
-    return None  # No valid moves
-
-def simulate_random_game(board, player):
-    """Simulate a random game and return the result."""
-    # This is a placeholder - implement actual game simulation
-    # For now, just return a random result
-    import random
-    return random.random() > 0.5
+    # Fallback - return first available move
+    return available_moves[0] if available_moves else -1
