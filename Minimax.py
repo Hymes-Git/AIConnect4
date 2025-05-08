@@ -185,20 +185,37 @@ def evaluate_board(board, player):
     
     return score
 
+# def evaluate_window(window, player):
+#     """
+#     Evaluates a window of 4 pieces and returns a score
+#     """
+#     opponent = 1 if player == 2 else 2
+#     
+#     if window.count(player) == 4:
+#         return 100  # Player wins
+#     elif window.count(player) == 3 and window.count(0) == 1:
+#         return 5  # Player has 3 in a row with an open spot
+#     elif window.count(player) == 2 and window.count(0) == 2:
+#         return 2  # Player has 2 in a row with 2 open spots
+#     elif window.count(opponent) == 3 and window.count(0) == 1:
+#         return -4  # Opponent has 3 in a row with an open spot - block them!
+#     else:
+#         return 0
 def evaluate_window(window, player):
-    """
-    Evaluates a window of 4 pieces and returns a score
-    """
     opponent = 1 if player == 2 else 2
-    
     if window.count(player) == 4:
-        return 100  # Player wins
+        return 10000
     elif window.count(player) == 3 and window.count(0) == 1:
-        return 5  # Player has 3 in a row with an open spot
+        return 100
     elif window.count(player) == 2 and window.count(0) == 2:
-        return 2  # Player has 2 in a row with 2 open spots
+        return 10
+    elif window.count(player) == 1 and window.count(0) == 3:
+        return 1
     elif window.count(opponent) == 3 and window.count(0) == 1:
-        return -4  # Opponent has 3 in a row with an open spot - block them!
+        return -80  # Increase penalty
+    elif window.count(opponent) == 2 and window.count(0) == 2:
+        return -10
     else:
         return 0
+
 
