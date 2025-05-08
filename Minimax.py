@@ -211,8 +211,10 @@ def evaluate_window(window, player):
         return 10
     elif window.count(player) == 1 and window.count(0) == 3:
         return 1
+    elif window.count(opponent) == 4 :
+        return -9000  
     elif window.count(opponent) == 3 and window.count(0) == 1:
-        return -80  # Increase penalty
+        return -1000  
     elif window.count(opponent) == 2 and window.count(0) == 2:
         return -10
     else:
