@@ -49,7 +49,7 @@ class Node:
             return self  # Return self if no children available
         
         best_score = -float("inf")
-        best_child = None
+        best_child = self.children[0]  # Default to first child to avoid None
         for child in self.children:
             if child.visits == 0:
                 score = float("inf")
@@ -59,40 +59,49 @@ class Node:
                 best_score = score
                 best_child = child
                 
-        return best_child  # This should never be None if children exist
+        return best_child
     
     def expand(self):
         if not self.untried_moves:
             return self  # Already fully expanded
+        
+        try:
+            move = self.untried_moves.pop()
             
-        move = self.untried_moves.pop()
-        
-        # Copy board and top_row safely
-        new_board = [col[:] for col in self.board]
-        new_top_row = self.top_row[:]
-        
-        # Make the move
-        row = new_top_row[move]
-        if row < 0:
-            # Handle column overflow - try another move if possible
-            if self.untried_moves:
-                return self.expand()
+            # Copy board and top_row safely
+            new_board = [col[:] for col in self.board]
+            new_top_row = self.top_row[:]
+            
+            # Make the move
+            if move >= len(new_top_row):
+                # Move is out of bounds, return self
+                return self
+                
+            row = new_top_row[move]
+            if row < 0:
+                # Handle column overflow - try another move if possible
+                if self.untried_moves:
+                    return self.expand()
+                return self
+                
+            new_board[move][row] = self.player
+            new_top_row[move] -= 1
+            
+            # Create new child node with opponent as current player
+            child = Node(
+                new_board, 
+                parent=self, 
+                available_moves=self.get_available_moves(new_board),
+                current_player=3 - self.player,  # Switch player (assuming players are 1 and 2)
+                top_row=new_top_row
+            )
+            
+            self.children.append(child)
+            return child
+        except Exception as e:
+            # If any error occurs during expansion, return self instead of None
+            print(f"Error during expansion: {e}")
             return self
-            
-        new_board[move][row] = self.player
-        new_top_row[move] -= 1
-        
-        # Create new child node with opponent as current player
-        child = Node(
-            new_board, 
-            parent=self, 
-            available_moves=self.get_available_moves(new_board),
-            current_player=3 - self.player,  # Switch player (assuming players are 1 and 2)
-            top_row=new_top_row
-        )
-        
-        self.children.append(child)
-        return child
     
     def backpropagate(self, result):
         self.visits += 1
@@ -108,12 +117,21 @@ def mcts_search(root_state, iterations=1000):
     for _ in range(iterations):
         # Selection
         node = root
-        while node.is_fully_expanded() and node.children:
+        # Make sure node is not None before checking if fully expanded
+        while node is not None and node.is_fully_expanded() and node.children:
             node = node.select_child()
         
+        # Guard against None
+        if node is None:
+            continue
+            
         # Expansion
         if not node.is_fully_expanded() and node.untried_moves:
             node = node.expand()
+            
+        # Guard against None again after expansion
+        if node is None:
+            continue
         
         # Simulation - simplified random playout
         result = simulate_random_game(node.board, node.player)
