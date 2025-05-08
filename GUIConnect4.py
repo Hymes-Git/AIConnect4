@@ -37,7 +37,7 @@ class GUI:
         self.gameStatusLabelText.set("")
         gameStatusLabel = Label(self.root, textvariable=self.gameStatusLabelText, foreground="red")
 
-        self.numGames = 0
+        self.numGames = StringVar()
 
 
         self.resetGame()
@@ -148,8 +148,8 @@ class GUI:
         start_time = time.time()
         # slot = randomMove.randomMove(self.board, self.topRow, self.availableMoves, self.currentPlayer)
         slot = Minimax.minimax_move(self.board, self.topRow, self.availableMoves, self.currentPlayer, 6)
-        print(f"AI Operation Took: {time.time() - start_time} seconds")
-        self.timing[self.currentPlayer] += time.time() - start_time
+        #print(f"AI Operation Took: {time.time() - start_time} seconds")
+        self.timing[self.currentPlayer] += (time.time() - start_time)
 
         self.board[slot][self.topRow[slot]] = self.currentPlayer 
 
@@ -281,13 +281,38 @@ class GUI:
             result = self.getAIMove()
             self.root.update()
             if result != 0:
-                self.gameFinished()
-                return result
+                return (result, self.timing[1], self.timing[2])
             
     def runGameSet(self):
-        if self.numGames < 1:
+        numGames = int(self.numGames.get())
+        print(f"Num Games: {numGames}")
+        if numGames < 1:
             self.gameStatusLabelText.set(f"Error Number of Games Must be > 0")
             return
+
+        player1Wins = 0
+        player2Wins = 0
+        player1Time = 0
+        player2Time = 0
+
+        gameStats = []
+
+        for gameNum in range(numGames):
+            result = self.runAIGame()
+            player1Time += result[1]
+            player2Time += result[2]
+            if (result[0] == 1):
+                player1Wins += 1
+            elif (result[0] == 2):
+                player2Wins += 1
+            gameStats.append(result)
+
+
+        print(f"\n\n")
+        print(f"Finished running a series of {numGames} games")
+        print(f"Player 1 Won {player1Wins*100/numGames: .3f}% of games, taking {player1Time: .3f} seconds to compute moves")
+        print(f"Player 2 Won {player2Wins*100/numGames: .3f}% of games, taking {player2Time: .3f} seconds to compute moves")
+
         
         
             
