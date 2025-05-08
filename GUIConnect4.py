@@ -3,6 +3,7 @@ import argparse
 import numpy as np
 import randomMove
 import Minimax
+import ABPruning
 import time
 
 class Move:
@@ -142,12 +143,23 @@ class GUI:
 
     def getAIMove(self):
 
+        if (len(self.availableMoves) < 1):
+            return 3
+
         self.numMoves += 1
 
         # Run AI Move Get, keep track of how much time AI took to process
         start_time = time.time()
-        # slot = randomMove.randomMove(self.board, self.topRow, self.availableMoves, self.currentPlayer)
-        slot = Minimax.minimax_move(self.board, self.topRow, self.availableMoves, self.currentPlayer, 6)
+
+        # Allows selecting different algorithms for each player
+        #if (self.currentPlayer == 1):
+          #  slot = ABPruning.ab_move(self.board, self.topRow, self.availableMoves, self.currentPlayer, 5)
+        #elif (self.currentPlayer == 2):
+         #   slot = ABPruning.ab_move(self.board, self.topRow, self.availableMoves, self.currentPlayer, 5)
+            #slot = Minimax.minimax_move(self.board, self.topRow, self.availableMoves, self.currentPlayer, 5)
+
+        slot = ABPruning.ab_move(self.board, self.topRow, self.availableMoves, self.currentPlayer, 5)
+
         #print(f"AI Operation Took: {time.time() - start_time} seconds")
         self.timing[self.currentPlayer] += (time.time() - start_time)
 
@@ -252,6 +264,11 @@ class GUI:
             self.gameStatusLabelText.set(f"Player {player} Wins!")
             print(f"Player {player} Wins!")
             return player
+        
+        if len(self.availableMoves) < 1:
+            self.gameStatusLabelText.set(f"Board Filled, No Player Wins")
+            print(f"Board Filled, No Player Wins")
+            return 3
 
         return 0                         
 
