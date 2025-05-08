@@ -37,12 +37,15 @@ class GUI:
         self.gameStatusLabelText.set("")
         gameStatusLabel = Label(self.root, textvariable=self.gameStatusLabelText, foreground="red")
 
-
+        self.numGames = 0
 
 
         self.resetGame()
 
         self.displayMoveList()
+
+        #Entry
+        numGamesEntry = Entry(self.root, textvariable=self.numGames, font = ('calibre', 12, 'normal'), width = 10)
 
         #Movement Buttons
         button0 = Button(self.root, text="Move Here", command = lambda: self.MoveButtonPress(0))
@@ -56,6 +59,7 @@ class GUI:
         clearButton = Button(self.root, text="Clear Board", command = lambda: self.ClearButtonPress())
         AIMoveButton = Button(self.root, text="AI Move", command = lambda: self.getAIMove())
         runGameButton = Button(self.root, text="Run AI Game", command = lambda: self.runAIGame())
+        runGameSetButton = Button(self.root, text="Run Game Set", command = lambda: self.runGameSet())
         
         # Movement Button Placement
         button0.grid(row = 1, column = 0)
@@ -66,11 +70,14 @@ class GUI:
         button5.grid(row = 1, column = 5)
         button6.grid(row = 1, column = 6)
 
+        numGamesEntry.grid(row = 1, column = 10, sticky = W)
+
         gameStatusLabel.grid(row = 0, column = 0, columnspan = 8)
 
         clearButton.grid(row = 1, column = 7, columnspan = 1, sticky = NW)
         AIMoveButton.grid(row = 1, column = 8, columnspan=1, sticky = NW)
         runGameButton.grid(row = 1, column = 9, columnspan = 1, sticky = NW)
+        runGameSetButton.grid(row = 1, column = 11, columnspan = 1, sticky = NW)
 
         self.displayBoard()
 
@@ -277,6 +284,11 @@ class GUI:
                 self.gameFinished()
                 return result
             
+    def runGameSet(self):
+        if self.numGames < 1:
+            self.gameStatusLabelText.set(f"Error Number of Games Must be > 0")
+            return
+        
         
             
 
