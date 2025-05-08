@@ -3,8 +3,6 @@ import argparse
 import numpy as np
 import randomMove
 import Minimax
-import ABPruning
-import MCTS
 import time
 
 class Move:
@@ -150,8 +148,6 @@ class GUI:
         start_time = time.time()
         # slot = randomMove.randomMove(self.board, self.topRow, self.availableMoves, self.currentPlayer)
         slot = Minimax.minimax_move(self.board, self.topRow, self.availableMoves, self.currentPlayer, 6)
-        mcts = MCTS(self.board, self.topRow, self.availableMoves, self.currentPlayer, depth=6)
-        slot = mcts.mcts_move()
         #print(f"AI Operation Took: {time.time() - start_time} seconds")
         self.timing[self.currentPlayer] += (time.time() - start_time)
 
