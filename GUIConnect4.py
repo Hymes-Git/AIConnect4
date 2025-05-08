@@ -310,8 +310,8 @@ class GUI:
 
         print(f"\n\n")
         print(f"Finished running a series of {numGames} games")
-        print(f"Player 1 Won {player1Wins*100/numGames: .3f}% of games, taking {player1Time: .3f} seconds to compute moves")
-        print(f"Player 2 Won {player2Wins*100/numGames: .3f}% of games, taking {player2Time: .3f} seconds to compute moves")
+        print(f"Player 1 Won {player1Wins} ({player1Wins*100/numGames: .3f}%)  of games, taking {player1Time: .3f} seconds to compute moves")
+        print(f"Player 2 Won {player2Wins} ({player2Wins*100/numGames: .3f}%) of games, taking {player2Time: .3f} seconds to compute moves")
 
         
         
