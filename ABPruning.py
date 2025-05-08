@@ -4,7 +4,7 @@ import numpy as np
 import random
 import time
 
-def minimax_move(board, top_row, available_moves, current_player, depth=4):
+def ab_move(board, top_row, available_moves, current_player, depth=4):
     """
     Uses minimax algorithm with alpha-beta pruning to determine the best move
     
@@ -288,4 +288,4 @@ def evaluate_window(window, player):
 
 def randomMove(board, top_row, available_moves, current_player):
     """Legacy function to maintain compatibility with the original code"""
-    return minimax_move(board, top_row, available_moves, current_player)
+    return ab_move(board, top_row, available_moves, current_player)
