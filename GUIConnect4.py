@@ -198,11 +198,15 @@ class GUI:
 
         #slot = mcts_connect4_move(self.board, self.topRow, self.availableMoves, self.currentPlayer, 5000)
 
-        if (self.currentPlayer == 2):
-            slot = mcts_connect4_move(self.board, self.topRow, self.availableMoves, self.currentPlayer, 5000)
-        elif (self.currentPlayer == 1):
-            slot = mcts_connect4_move(self.board, self.topRow, self.availableMoves, self.currentPlayer, 5000)
-           # slot = ABPruning.ab_move(self.board, self.topRow, self.availableMoves, self.currentPlayer, 5)
+        if (self.currentPlayer == 1):
+            #slot = mcts_connect4_move(self.board, self.topRow, self.availableMoves, self.currentPlayer, 5000)
+            #slot = ABPruning.ab_move(self.board, self.topRow, self.availableMoves, self.currentPlayer, 4)
+            slot = Minimax.minimax_move(self.board, self.topRow, self.availableMoves, self.currentPlayer, 4)
+        elif (self.currentPlayer == 2):
+            # slot = mcts_connect4_move(self.board, self.topRow, self.availableMoves, self.currentPlayer, 5000)
+            #slot = Minimax.minimax_move(self.board, self.topRow, self.availableMoves, self.currentPlayer, 2)
+            slot = ABPruning.ab_move(self.board, self.topRow, self.availableMoves, self.currentPlayer, 4)
+            # slot = ABPruning.ab_move(self.board, self.topRow, self.availableMoves, self.currentPlayer, 5)
 
 
         #print(f"AI Operation Took: {time.time() - start_time} seconds")
